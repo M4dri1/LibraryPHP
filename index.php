@@ -1,18 +1,8 @@
 <?php
 function connect()
 {
-    $server = "localhost";
-    $user = "root";
-    $password = "12345678";
-    $dbname = "library1";
-
-    try {
-        $pdo = new PDO("mysql:host=$server;dbname=$dbname", $user, $password);
-        $pdo->exec("SET CHARACTER SET utf8");
-    } catch (\Throwable $th) {
-        die("Connection error: " . $th->getMessage());
-    }
-
+    $pdo = new PDO('mysql:host=db;dbname=library1', 'root', '12345678');
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $pdo;
 }
 
@@ -170,9 +160,7 @@ $books = get($perPage, $offset, $search);
                     <?php foreach ($books as $book): ?>
                         <tr>
                             <?php if ($edit_mode == $book['book_id']): ?>
-                                <td>
-                                    <?= $book['book_id'] ?>
-                                </td>
+                                <td><?= $book['book_id'] ?></td>
                                 <td>
                                     <input type="number" name="author_id" value="<?= $book['author_id'] ?>" required
                                         form="edit-form-<?= $book['book_id'] ?>">
