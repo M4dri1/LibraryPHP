@@ -46,8 +46,7 @@ function count_books($search = '')
 function add($author_id, $title)
 {
     $pdo = connect();
-    $title = ucwords(strtolower($title));
-    $title = trim($title);
+    $title = ucwords(strtolower(trim($title)));
     $sql = "INSERT INTO books (author_id, title) VALUES (:author_id, :title)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -67,8 +66,7 @@ function delete($book_id)
 function update($book_id, $author_id, $title)
 {
     $pdo = connect();
-    $title = ucwords(strtolower($title));
-    $title = trim($title);
+    $title = ucwords(strtolower(trim($title)));
     $sql = "UPDATE books SET author_id = :author_id, title = :title WHERE book_id = :book_id";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -89,13 +87,9 @@ $currentPage = max(1, min($totalPages, $currentPage));
 $offset = ($currentPage - 1) * $perPage;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     if (isset($_POST['add'])) {
         $author_id = $_POST['author_id'] ?? null;
         $title = $_POST['title'] ?? null;
-
-
-
         if ($author_id && $title) {
             add($author_id, $title);
         }
@@ -152,6 +146,7 @@ $books = get($perPage, $offset, $search);
                 <button type="submit" name="add">Add Book</button>
             </form>
         </section>
+
         <section class="search-section">
             <h2>Search Books</h2>
             <form method="get">
@@ -160,45 +155,48 @@ $books = get($perPage, $offset, $search);
                 <button type="submit">Search</button>
             </form>
         </section>
+
         <?php if (!empty($books)): ?>
             <section class="book-list">
                 <h2>Books</h2>
+                <p>Total books found: <?= $totalBooks ?></p>
                 <table border="1">
                     <tr>
                         <th>ID</th>
                         <th>Author ID</th>
                         <th>Title</th>
                         <th>Actions</th>
-                        <p>Total books found: <?= $totalBooks ?></p>
                     </tr>
                     <?php foreach ($books as $book): ?>
                         <tr>
                             <?php if ($edit_mode == $book['book_id']): ?>
-                                <form method="post">
-                                    <td>
-                                        <?= $book['book_id'] ?>
-                                        <input type="hidden" name="book_id" value="<?= $book['book_id'] ?>" />
-                                    </td>
-                                    <td>
-                                        <input type="number" name="author_id" value="<?= $book['author_id'] ?>" required />
-                                    </td>
-                                    <td>
-                                        <input type="text" name="title" value="<?= htmlspecialchars($book['title']) ?>" required />
-                                    </td>
-                                    <td>
+                                <td>
+                                    <?= $book['book_id'] ?>
+                                </td>
+                                <td>
+                                    <input type="number" name="author_id" value="<?= $book['author_id'] ?>" required
+                                        form="edit-form-<?= $book['book_id'] ?>">
+                                </td>
+                                <td>
+                                    <input type="text" name="title" value="<?= htmlspecialchars($book['title']) ?>" required
+                                        form="edit-form-<?= $book['book_id'] ?>">
+                                </td>
+                                <td>
+                                    <form method="post" id="edit-form-<?= $book['book_id'] ?>">
+                                        <input type="hidden" name="book_id" value="<?= $book['book_id'] ?>">
                                         <button type="submit" name="save">Save</button>
-                                    </td>
-                                </form>
+                                    </form>
+                                </td>
                             <?php else: ?>
                                 <td><?= $book['book_id'] ?></td>
                                 <td><?= $book['author_id'] ?></td>
                                 <td><?= htmlspecialchars($book['title']) ?></td>
                                 <td>
-                                    <form method="post" style="display:inline;">
+                                    <form method="post" class="inline">
                                         <input type="hidden" name="book_id" value="<?= $book['book_id'] ?>" />
                                         <button type="submit" name="edit">Edit</button>
                                     </form>
-                                    <form method="post" style="display:inline;">
+                                    <form method="post" class="inline">
                                         <input type="hidden" name="book_id" value="<?= $book['book_id'] ?>" />
                                         <button type="submit" name="delete"
                                             onclick="return confirm('Are you sure you want to delete this book?')">Delete</button>
@@ -212,9 +210,7 @@ $books = get($perPage, $offset, $search);
                 <div class="pagination">
                     <p>Page <?= $currentPage ?> of <?= $totalPages ?></p>
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <a href="?search=<?= urlencode($search) ?>&page=<?= $i ?>">
-                            <?= $i ?>
-                        </a>
+                        <a href="?search=<?= urlencode($search) ?>&page=<?= $i ?>"><?= $i ?></a>
                     <?php endfor; ?>
                 </div>
             </section>
