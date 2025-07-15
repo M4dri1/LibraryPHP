@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Library - Books</title>
+    <link rel="stylesheet" href="assets/app.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Books</h1>
+    </header>
+
+    <nav>
+        <a href="index.html" class="active">Books</a>
+        <a href="authors.html">Authors</a>
+    </nav>
+
+    <main>
+        <section class="form-section">
+            <h2>Add Book</h2>
+            <form id="book-form">
+                <label for="author-select">Author:</label>
+                <select name="author_id" id="author-select" required>
+                    <option value="">Select an Author</option>
+                </select>
+                <label for="book-title">Title:</label>
+                <input type="text" name="title" id="book-title" required />
+                <button type="submit">Add</button>
+            </form>
+        </section>
+
+        <section class="search-section">
+            <h2>Search Books</h2>
+            <form id="search-form">
+                <input type="text" name="search_query" id="search-input" placeholder="Search by title" />
+                <button type="submit">Search</button>
+            </form>
+        </section>
+
+        <div id="no-results-message" class="no-results">
+            No results found for your search.
+        </div>
+
+        <section class="book-list">
+            <h2>Books</h2>
+            <table id="books-table" border="1">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Author ID</th>
+                        <th>Name</th>
+                        <th>Title</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="pagination" id="pagination"></div>
+        </section>
+    </main>
+
+    <script src="assets/app.js"></script>
+</body>
+
+<footer>
+    <p>&copy; 2025 Library System</p>
+</footer>
+
+</html>

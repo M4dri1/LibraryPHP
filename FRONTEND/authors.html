@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Library - Authors</title>
+    <link rel="stylesheet" href="assets/app.css" />
+</head>
+
+<body>
+    <header>
+        <h1>Authors</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">Books</a>
+        <a href="authors.html" class="active">Authors</a>
+    </nav>
+
+    <main>
+        <section class="form-section">
+            <h2>Add Author</h2>
+            <form id="author-form">
+                <label>Name:</label>
+                <input type="text" name="name" required />
+                <button type="submit">Add</button>
+            </form>
+        </section>
+
+        <section class="author-list">
+            <h2>Authors</h2>
+            <table id="authors" border="1">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="pagination" id="pagination"></div>
+        </section>
+    </main>
+
+    <script src="assets/authors.js"></script>
+</body>
+
+<footer>
+    <p>&copy; 2025 Library System</p>
+</footer>
+
+</html>
