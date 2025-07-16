@@ -33,10 +33,13 @@ function get($limit = 5, $offset = 0, $search = '')
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-$limit = $_GET['limit'] ?? 5;
-$offset = $_GET['offset'] ?? 0;
-$search = $_GET['search'] ?? '';
+try {
+    $limit = $_GET['limit'] ?? 5;
+    $offset = $_GET['offset'] ?? 0;
+    $search = $_GET['search'] ?? '';
 
-$books = get($limit, $offset, $search);
-
-echo json_encode($books);
+    $books = get($limit, $offset, $search);
+    echo json_encode($books);
+} catch (Exception) {
+    http_response_code(500);
+}

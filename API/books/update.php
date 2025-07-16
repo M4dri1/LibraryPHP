@@ -6,17 +6,16 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($data['book_id'], $data['author_id'], $data['title'])) {
     http_response_code(400);
-    echo json_encode(['error' => 'Parâmetros insuficientes']);
     exit;
 }
 
+$title = ucwords(strtolower(trim($data['title'])));
 $book_id = (int) $data['book_id'];
 $author_id = (int) $data['author_id'];
-$title = trim($data['title']);
 
 if ($book_id <= 0 || $author_id <= 0 || empty($title)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Parâmetros inválidos']);
+    echo json_encode(['error' => 'Invalid ID or empty title']);
     exit;
 }
 
@@ -28,13 +27,22 @@ try {
         ':title' => $title,
         ':book_id' => $book_id
     ]);
-    if ($success) {
-        echo json_encode(['success' => true]);
+
+    if (!$success) {
+        http_response_code(500);
+        exit;
+    }
+
+    if ($stmt->rowCount() === 0) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Book ID does not exist.']);
+        exit;
+    }
+} catch (PDOException $e) {
+    if ($e->getCode() === '23000' && str_contains($e->getMessage(), 'foreign key')) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Author ID does not exist.']);
     } else {
         http_response_code(500);
-        echo json_encode(['error' => 'Falha ao atualizar o livro']);
     }
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Erro no servidor: ' . $e->getMessage()]);
 }

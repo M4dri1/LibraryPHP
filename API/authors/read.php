@@ -24,10 +24,13 @@ function getAuthors($limit = 5, $offset = 0, $search = '')
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-$limit = $_GET['limit'] ?? 5;
-$offset = $_GET['offset'] ?? 0;
-$search = $_GET['search'] ?? '';
+try {
+    $limit = $_GET['limit'] ?? 5;
+    $offset = $_GET['offset'] ?? 0;
+    $search = $_GET['search'] ?? '';
 
-$authors = getAuthors($limit, $offset, $search);
-
-echo json_encode($authors);
+    $authors = getAuthors($limit, $offset, $search);
+    echo json_encode($authors);
+} catch (Exception) {
+    http_response_code(500);
+}

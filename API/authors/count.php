@@ -7,7 +7,11 @@ function countAuthors()
     $pdo = connect();
     $stmt = $pdo->query("SELECT COUNT(*) AS total FROM authors");
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return (int) $row['total'];
+    return (int) ($row['total'] ?? 0);
 }
 
-echo json_encode(['total' => countAuthors()]);
+try {
+    echo json_encode(['total' => countAuthors()]);
+} catch (Exception) {
+    http_response_code(500);
+}

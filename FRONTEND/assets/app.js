@@ -2,7 +2,6 @@ const booksTableBody = document.querySelector("#books-table tbody");
 const bookForm = document.querySelector("#book-form");
 const paginationDiv = document.getElementById("pagination");
 const authorSelect = document.querySelector("#author-select");
-
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
 const noResultsMessage = document.getElementById("no-results-message");
@@ -13,86 +12,64 @@ let currentSearchQuery = '';
 
 async function fetchBooks(page = 0, searchQuery = '') {
     const offset = page * limit;
+    const url = `/API/books/read.php?limit=${limit}&offset=${offset}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`;
+    const totalUrl = `/API/books/count.php${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}`;
 
     try {
-        let url = `/API/books/read.php?limit=${limit}&offset=${offset}`;
-        if (searchQuery) {
-            url += `&search=${encodeURIComponent(searchQuery)}`;
-        }
+        const [res, totalRes] = await Promise.all([fetch(url), fetch(totalUrl)]);
+        if (!res.ok || !totalRes.ok) return;
 
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const books = await res.json();
-
-        let totalUrl = `/API/books/count.php`;
-        if (searchQuery) {
-            totalUrl += `?search=${encodeURIComponent(searchQuery)}`;
-        }
-        const totalRes = await fetch(totalUrl);
-        if (!totalRes.ok) throw new Error(`HTTP error! status: ${totalRes.status}`);
         const { total } = await totalRes.json();
 
-        if (booksTableBody) {
-            if (books.length === 0 && searchQuery) {
-                booksTableBody.innerHTML = '';
-                if (noResultsMessage) {
-                    noResultsMessage.style.display = 'block';
-                }
-            } else {
-                booksTableBody.innerHTML = books.map(book => `
-                    <tr data-book-id="${book.book_id}">
-                        <td>${book.book_id}</td>
-                        <td class="author_id">${book.author_id}</td>
-                        <td>${book.author_name}</td>
-                        <td class="title">${book.title}</td>
-                        <td>
-                            <button onclick="startEditBook(${book.book_id})">Edit</button>
-                            <button onclick="deleteBook(${book.book_id})">Delete</button>
-                        </td>
-                    </tr>
-                `).join('');
-                if (noResultsMessage) {
-                    noResultsMessage.style.display = 'none';
-                }
-            }
-        } else {
-            console.error("Element #books-table tbody not found. Cannot update table.");
-        }
-
-        currentPage = page;
+        renderBooks(books);
         renderPagination(Math.ceil(total / limit));
-    } catch (error) {
-        console.error("Error loading books:", error);
+        currentPage = page;
+    } catch (_) {
         if (booksTableBody) {
             booksTableBody.innerHTML = `<tr><td colspan="5">Failed to load books.</td></tr>`;
-        } else {
-            console.error("Could not display error message in table: #books-table tbody is null.");
         }
-        if (noResultsMessage) {
-            noResultsMessage.style.display = 'none';
-        }
+        if (noResultsMessage) noResultsMessage.style.display = 'none';
     }
 }
 
+function renderBooks(books) {
+    if (!booksTableBody) return;
+
+    if (books.length === 0 && currentSearchQuery) {
+        booksTableBody.innerHTML = '';
+        if (noResultsMessage) noResultsMessage.style.display = 'block';
+        return;
+    }
+
+    booksTableBody.innerHTML = books.map(book => `
+        <tr data-book-id="${book.book_id}">
+            <td>${book.book_id}</td>
+            <td class="author_id">${book.author_id}</td>
+            <td>${book.author_name}</td>
+            <td class="title">${book.title}</td>
+            <td>
+                <button onclick="startEditBook(${book.book_id})">Edit</button>
+                <button onclick="deleteBook(${book.book_id})">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+
+    if (noResultsMessage) noResultsMessage.style.display = 'none';
+}
+
 function renderPagination(totalPages) {
-    if (paginationDiv) {
-        if (totalPages > 1) {
-            paginationDiv.style.display = 'block';
-        } else {
-            paginationDiv.style.display = 'none';
-        }
+    if (!paginationDiv) return;
 
-        paginationDiv.innerHTML = '';
+    paginationDiv.style.display = totalPages > 1 ? 'block' : 'none';
+    paginationDiv.innerHTML = '';
 
-        for (let i = 0; i < totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.textContent = i + 1;
-            btn.className = i === currentPage ? 'active' : '';
-            btn.onclick = () => fetchBooks(i, currentSearchQuery);
-            paginationDiv.appendChild(btn);
-        }
-    } else {
-        console.error("Element #pagination not found. Cannot render pagination.");
+    for (let i = 0; i < totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i + 1;
+        btn.className = i === currentPage ? 'active' : '';
+        btn.onclick = () => fetchBooks(i, currentSearchQuery);
+        paginationDiv.appendChild(btn);
     }
 }
 
@@ -100,19 +77,14 @@ function startEditBook(book_id) {
     const row = document.querySelector(`tr[data-book-id="${book_id}"]`);
     if (!row) return;
 
-    const authorIdCell = row.querySelector('.author_id');
-    const titleCell = row.querySelector('.title');
-    const actionsCell = row.querySelector('td:last-child');
+    const authorId = row.querySelector('.author_id').textContent;
+    const title = row.querySelector('.title').textContent;
 
-    const currentAuthorId = authorIdCell.textContent;
-    const currentTitle = titleCell.textContent;
-
-    authorIdCell.innerHTML = `<input type="number" value="${currentAuthorId}" />`;
-    titleCell.innerHTML = `<input type="text" value="${currentTitle}" />`;
-
-    actionsCell.innerHTML = `
+    row.querySelector('.author_id').innerHTML = `<input type="number" value="${authorId}" />`;
+    row.querySelector('.title').innerHTML = `<input type="text" value="${title}" />`;
+    row.querySelector('td:last-child').innerHTML = `
         <button onclick="saveEditBook(${book_id})">Save</button>
-        <button onclick="cancelEditBook(${book_id}, '${currentAuthorId}', '${currentTitle.replace(/'/g, "\\'")}')">Cancel</button>
+        <button onclick="cancelEditBook(${book_id}, '${authorId}', '${title.replace(/'/g, "\\'")}')">Cancel</button>
     `;
 }
 
@@ -120,35 +92,44 @@ async function saveEditBook(book_id) {
     const row = document.querySelector(`tr[data-book-id="${book_id}"]`);
     if (!row) return;
 
-    const authorIdInput = row.querySelector('.author_id input');
-    const titleInput = row.querySelector('.title input');
+    const authorId = row.querySelector('.author_id input').value.trim();
+    const title = row.querySelector('.title input').value.trim();
 
-    const updatedAuthorId = authorIdInput.value.trim();
-    const updatedTitle = titleInput.value.trim();
+    if (!authorId || !title) return;
 
-    if (!updatedAuthorId || !updatedTitle) {
-        console.warn('Author ID and Title cannot be empty');
+    // Validate authorId is positive number before sending request
+    if (isNaN(authorId) || Number(authorId) <= 0) {
+        alert('Error: Author ID must be a positive number.');
         return;
     }
-
-    const data = {
-        book_id: book_id,
-        author_id: updatedAuthorId,
-        title: updatedTitle
-    };
 
     try {
         const res = await fetch('/API/books/update.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ book_id, author_id: authorId, title })
         });
 
-        if (!res.ok) throw new Error('Failed to update book');
+        if (!res.ok) {
+            let errorData;
+            try {
+                errorData = await res.json();
+            } catch {
+                alert('Unexpected error occurred.');
+                return;
+            }
+
+            if (errorData?.error === 'Author ID does not exist.') {
+                alert('Error: Author ID does not exist.');
+            } else {
+                alert('Error: ' + (errorData?.error || 'Unknown error'));
+            }
+            return;
+        }
 
         fetchBooks(currentPage, currentSearchQuery);
-    } catch (error) {
-        console.error('Error updating book: ' + error.message);
+    } catch (e) {
+        alert('Unexpected error. Please try again.');
     }
 }
 
@@ -156,14 +137,9 @@ function cancelEditBook(book_id, oldAuthorId, oldTitle) {
     const row = document.querySelector(`tr[data-book-id="${book_id}"]`);
     if (!row) return;
 
-    const authorIdCell = row.querySelector('.author_id');
-    const titleCell = row.querySelector('.title');
-    const actionsCell = row.querySelector('td:last-child');
-
-    authorIdCell.textContent = oldAuthorId;
-    titleCell.textContent = oldTitle;
-
-    actionsCell.innerHTML = `
+    row.querySelector('.author_id').textContent = oldAuthorId;
+    row.querySelector('.title').textContent = oldTitle;
+    row.querySelector('td:last-child').innerHTML = `
         <button onclick="startEditBook(${book_id})">Edit</button>
         <button onclick="deleteBook(${book_id})">Delete</button>
     `;
@@ -174,12 +150,11 @@ bookForm.onsubmit = async (e) => {
     const formData = new FormData(bookForm);
     const data = Object.fromEntries(formData.entries());
 
-    if (!data.author_id) {
-        console.warn('Please select an author.');
-        return;
-    }
-    if (!data.title || data.title.trim() === '') {
-        console.warn('Title cannot be empty.');
+    if (!data.author_id || !data.title.trim()) return;
+
+    // Validate author_id before sending create request
+    if (isNaN(data.author_id) || Number(data.author_id) <= 0) {
+        alert('Error: Author ID must be a positive number.');
         return;
     }
 
@@ -189,16 +164,16 @@ bookForm.onsubmit = async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        if (!res.ok) throw new Error('Failed to add book');
-        bookForm.reset();
-        fetchBooks(currentPage, currentSearchQuery);
-    } catch (error) {
-        console.error('Error adding book: ' + error.message);
-    }
+
+        if (res.ok) {
+            bookForm.reset();
+            fetchBooks(currentPage, currentSearchQuery);
+        }
+    } catch (_) { }
 };
 
 async function deleteBook(book_id) {
-    if (!window.confirm('Are you sure you want to delete?')) return;
+    if (!confirm('Are you sure you want to delete?')) return;
 
     try {
         const res = await fetch('/API/books/delete.php', {
@@ -206,39 +181,31 @@ async function deleteBook(book_id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ book_id })
         });
-        if (!res.ok) throw new Error('Failed to delete book');
-        fetchBooks(currentPage, currentSearchQuery);
-    } catch (error) {
-        console.error('Error deleting book: ' + error.message);
-    }
+
+        if (res.ok) fetchBooks(currentPage, currentSearchQuery);
+    } catch (_) { }
 }
 
 async function populateAuthorSelect() {
-    if (!authorSelect) {
-        console.error("Element #author-select not found. Cannot populate authors dropdown.");
-        return;
-    }
+    if (!authorSelect) return;
 
     try {
         const res = await fetch('/API/authors/read.php?limit=9999&offset=0');
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        let authors = await res.json();
+        if (!res.ok) return;
 
+        let authors = await res.json();
         if (typeof authors === 'object' && authors !== null && !Array.isArray(authors)) {
             authors = Object.values(authors);
         }
 
         authorSelect.innerHTML = '<option value="">Select an Author</option>';
-
         authors.forEach(author => {
             const option = document.createElement('option');
             option.value = author.author_id;
             option.textContent = author.name;
             authorSelect.appendChild(option);
         });
-
-    } catch (error) {
-        console.error("Error loading authors for select:", error);
+    } catch (_) {
         authorSelect.innerHTML = '<option value="">Error loading authors</option>';
         authorSelect.disabled = true;
     }
@@ -250,8 +217,6 @@ if (searchForm) {
         currentSearchQuery = searchInput.value.trim();
         fetchBooks(0, currentSearchQuery);
     });
-} else {
-    console.error("Element #search-form not found. Search functionality will not work.");
 }
 
 fetchBooks();

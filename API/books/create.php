@@ -9,17 +9,19 @@ $title = $data['title'] ?? null;
 
 if (!$author_id || !$title) {
     http_response_code(400);
-    echo json_encode(['error' => 'author_id e title são obrigatórios']);
     exit;
 }
 
 try {
     $pdo = connect();
-    $title = ucwords(strtolower(trim($title)));
+    $title = ucwords(string: strtolower(trim(string: $title)));
     $stmt = $pdo->prepare("INSERT INTO books (author_id, title) VALUES (:author_id, :title)");
-    $stmt->execute([':author_id' => $author_id, ':title' => $title]);
-    echo json_encode(['success' => true, 'book_id' => $pdo->lastInsertId()]);
-} catch (Exception $e) {
+    $success = $stmt->execute([':author_id' => $author_id, ':title' => $title]);
+
+    if (!$success) {
+        http_response_code(500);
+        exit;
+    }
+} catch (Exception) {
     http_response_code(500);
-    echo json_encode(['error' => 'Erro ao criar livro: ' . $e->getMessage()]);
 }
