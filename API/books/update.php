@@ -21,28 +21,30 @@ if ($book_id <= 0 || $author_id <= 0 || empty($title)) {
 
 try {
     $pdo = connect();
+
+    $check = $pdo->prepare("SELECT COUNT(*) FROM books WHERE book_id = ?");
+    $check->execute([$book_id]);
+
+    if ($check->fetchColumn() == 0) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Book ID does not exist.']);
+        exit;
+    }
+
     $stmt = $pdo->prepare("UPDATE books SET author_id = :author_id, title = :title WHERE book_id = :book_id");
-    $success = $stmt->execute([
+    $stmt->execute([
         ':author_id' => $author_id,
         ':title' => $title,
         ':book_id' => $book_id
     ]);
 
-    if (!$success) {
-        http_response_code(500);
-        exit;
-    }
-
-    if ($stmt->rowCount() === 0) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Book ID does not exist.']);
-        exit;
-    }
+    http_response_code(200);
 } catch (PDOException $e) {
     if ($e->getCode() === '23000' && str_contains($e->getMessage(), 'foreign key')) {
         http_response_code(400);
         echo json_encode(['error' => 'Author ID does not exist.']);
     } else {
         http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
     }
 }

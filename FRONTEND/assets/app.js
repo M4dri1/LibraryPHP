@@ -97,7 +97,6 @@ async function saveEditBook(book_id) {
 
     if (!authorId || !title) return;
 
-    // Validate authorId is positive number before sending request
     if (isNaN(authorId) || Number(authorId) <= 0) {
         alert('Error: Author ID must be a positive number.');
         return;
@@ -152,7 +151,6 @@ bookForm.onsubmit = async (e) => {
 
     if (!data.author_id || !data.title.trim()) return;
 
-    // Validate author_id before sending create request
     if (isNaN(data.author_id) || Number(data.author_id) <= 0) {
         alert('Error: Author ID must be a positive number.');
         return;
