@@ -94,6 +94,10 @@ button[name="delete"] {
     font-size: 14px;
 }
 
+.inline {
+    display: inline;
+}
+
 nav {
     background-color: #162c74;
     padding: 10px;

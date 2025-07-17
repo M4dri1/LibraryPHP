@@ -9,6 +9,7 @@ const noResultsMessage = document.getElementById("no-results-message");
 let currentPage = 0;
 const limit = 5;
 let currentSearchQuery = '';
+let authorOptions = [];
 
 async function fetchBooks(page = 0, searchQuery = '') {
     const offset = page * limit;
@@ -46,7 +47,7 @@ function renderBooks(books) {
         <tr data-book-id="${book.book_id}">
             <td>${book.book_id}</td>
             <td class="author_id">${book.author_id}</td>
-            <td>${book.author_name}</td>
+            <td class="name">${book.author_name}</td>
             <td class="title">${book.title}</td>
             <td>
                 <button onclick="startEditBook(${book.book_id})">Edit</button>
@@ -77,11 +78,23 @@ function startEditBook(book_id) {
     const row = document.querySelector(`tr[data-book-id="${book_id}"]`);
     if (!row) return;
 
-    const authorId = row.querySelector('.author_id').textContent;
-    const title = row.querySelector('.title').textContent;
+    const authorId = row.querySelector('.author_id').textContent.trim();
+    const title = row.querySelector('.title').textContent.trim();
+    const nameCell = row.querySelector('.name');
 
-    row.querySelector('.author_id').innerHTML = `<input type="number" value="${authorId}" />`;
+    const select = document.createElement('select');
+    authorOptions.forEach(author => {
+        const option = document.createElement('option');
+        option.value = author.author_id;
+        option.textContent = author.name;
+        if (author.author_id == authorId) option.selected = true;
+        select.appendChild(option);
+    });
+
+    nameCell.innerHTML = '';
+    nameCell.appendChild(select);
     row.querySelector('.title').innerHTML = `<input type="text" value="${title}" />`;
+
     row.querySelector('td:last-child').innerHTML = `
         <button onclick="saveEditBook(${book_id})">Save</button>
         <button onclick="cancelEditBook(${book_id}, '${authorId}', '${title.replace(/'/g, "\\'")}')">Cancel</button>
@@ -92,7 +105,7 @@ async function saveEditBook(book_id) {
     const row = document.querySelector(`tr[data-book-id="${book_id}"]`);
     if (!row) return;
 
-    const authorId = row.querySelector('.author_id input').value.trim();
+    const authorId = row.querySelector('.name select').value.trim();
     const title = row.querySelector('.title input').value.trim();
 
     if (!authorId || !title) return;
@@ -137,7 +150,10 @@ function cancelEditBook(book_id, oldAuthorId, oldTitle) {
     if (!row) return;
 
     row.querySelector('.author_id').textContent = oldAuthorId;
+    const author = authorOptions.find(a => a.author_id == oldAuthorId);
+    row.querySelector('.name').textContent = author ? author.name : '';
     row.querySelector('.title').textContent = oldTitle;
+
     row.querySelector('td:last-child').innerHTML = `
         <button onclick="startEditBook(${book_id})">Edit</button>
         <button onclick="deleteBook(${book_id})">Delete</button>
@@ -195,6 +211,8 @@ async function populateAuthorSelect() {
         if (typeof authors === 'object' && authors !== null && !Array.isArray(authors)) {
             authors = Object.values(authors);
         }
+
+        authorOptions = authors;
 
         authorSelect.innerHTML = '<option value="">Select an Author</option>';
         authors.forEach(author => {
