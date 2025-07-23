@@ -28,7 +28,7 @@ async function fetchBooks(page = 0, searchQuery = '') {
         currentPage = page;
     } catch (_) {
         if (booksTableBody) {
-            booksTableBody.innerHTML = `<tr><td colspan="5">Failed to load books.</td></tr>`;
+            booksTableBody.innerHTML = `<tr><td colspan="5"></td></tr>`;
         }
         if (noResultsMessage) noResultsMessage.style.display = 'none';
     }
@@ -111,7 +111,6 @@ async function saveEditBook(book_id) {
     if (!authorId || !title) return;
 
     if (isNaN(authorId) || Number(authorId) <= 0) {
-        alert('Error: Author ID must be a positive number.');
         return;
     }
 
@@ -123,25 +122,11 @@ async function saveEditBook(book_id) {
         });
 
         if (!res.ok) {
-            let errorData;
-            try {
-                errorData = await res.json();
-            } catch {
-                alert('Unexpected error occurred.');
-                return;
-            }
-
-            if (errorData?.error === 'Author ID does not exist.') {
-                alert('Error: Author ID does not exist.');
-            } else {
-                alert('Error: ' + (errorData?.error || 'Unknown error'));
-            }
             return;
         }
 
         fetchBooks(currentPage, currentSearchQuery);
-    } catch (e) {
-        alert('Unexpected error. Please try again.');
+    } catch (_) {
     }
 }
 
@@ -168,7 +153,6 @@ bookForm.onsubmit = async (e) => {
     if (!data.author_id || !data.title.trim()) return;
 
     if (isNaN(data.author_id) || Number(data.author_id) <= 0) {
-        alert('Error: Author ID must be a positive number.');
         return;
     }
 

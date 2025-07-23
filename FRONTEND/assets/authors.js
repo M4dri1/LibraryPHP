@@ -37,7 +37,7 @@ async function fetchAuthors(page = 0) {
         renderPagination(Math.ceil(total / limit));
     } catch (_) {
         if (tableBody) {
-            tableBody.innerHTML = `<tr><td colspan="3">Failed to load authors.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="3"></td></tr>`;
         }
     }
 }
